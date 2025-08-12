@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Google Maps - Dealerships</title>
+  <style>
+    #map { height: 100vh; width: 100%; }
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #info-panel {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      z-index: 100;
+      max-width: 300px;
+    }
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+    }
+    #info-panel {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #fff;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 100;
+        max-width: 320px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #333;
+        line-height: 1.4;
+        transition: box-shadow 0.3s ease;
+        }
+
+        #info-panel:hover {
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        }
+
+        #info-panel h3 {
+        margin-top: 0;
+        font-weight: 700;
+        font-size: 1.4em;
+        color: #222;
+        }
+
+        #info-panel p {
+        margin: 6px 0;
+        font-size: 0.95em;
+        }
+
+        #info-panel a {
+        color: #4285F4;
+        text-decoration: none;
+        font-weight: 600;
+        }
+
+        #info-panel a:hover {
+        text-decoration: underline;
+        }
+  </style>
+</head>
+<body>
+  <div id="info-panel">Click on a marker for details</div>
+  <div id="panel">
+    <input id="searchInput" type="text" placeholder="Search for places..." />
+    <!--<div id="searchInputContainer"></div>-->
+    <input id="start" type="text" placeholder="Start location" />
+    <input id="end" type="text" placeholder="End location" />
+    <button id="routeBtn">Get Route</button>
+  </div>
+  <div id="loading" class="loading">Loading map and locations...</div>
+  <div id="map"></div>
+
+  <script>
+    const config = {
+      apiKey: 'AIzaSyC6KDgRCgr8uAipghnPRpaCLREyWUhtKb0', // ✅ Replace with your key
+      mapId: 'ab749fc600c31c23b448b1c9', // optional custom map styling
+      center: { lat: 36.77, lng: -121.41 },
+      zoom: 6
+    };
+
+    let map;
+    let infoWindow;
+    let autocomplete, marker, directionsService, directionsRenderer;
+
+    function loadGoogleMapsScript() {
+      return new Promise((resolve, reject) => {
+        if (window.google && window.google.maps) return resolve();
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${config.apiKey}&libraries=places,marker`;
+        script.async = true;
+        script.defer = true;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    async function loadLocations() {
+      const response = await fetch('enriched_dealerships.json'); // ✅ has lat/lng
+      if (!response.ok) throw new Error('Failed to load locations JSON');
+      return await response.json();
+    }
+
+    function createMarker(place) {
+      const marker = new google.maps.marker.AdvancedMarkerElement({
+        position: { lat: place.location.lat, lng: place.location.lng },
+        map,
+        title: place.name
+      });
+
+      marker.addListener("click", () => {
+        showPlaceDetails(place, marker);
+      });
+    }
+
+    function showPlaceDetails(place, marker) {
+      const websiteLink = place.website 
+        ? `<p><a href="${place.website}" target="_blank" rel="noopener">Website</a></p>` 
+        : '';
+      const photoUrl = place.photos && place.photos.length > 0 
+        ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${place.photos[0]}&key=${config.apiKey}`
+        : '';
+      
+      const content = `
+        <div style="padding: 15px; max-width: 280px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333;">
+            ${photoUrl ? `<img src="${photoUrl}" style="width: 100%; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">` : ''}
+            <h3 style="margin: 0 0 8px 0; font-size: 1.25em; color: #222;">${place.name}</h3>
+            ${place.rating ? `<p style="margin: 4px 0; font-weight: 600;">⭐ Rating: <span style="color: #f39c12;">${place.rating}</span></p>` : ''}
+            ${place.address ? `<p style="margin: 4px 0; font-size: 0.9em; line-height: 1.3;">📍 ${place.address}</p>` : ''}
+            ${websiteLink}
+            <p style="margin-top: 10px;">
+            <a href="https://www.google.com/maps/place/?q=place_id:${place.placeId}" target="_blank" rel="noopener" style="text-decoration: none; color: #4285F4; font-weight: 600;">View on Google Maps</a>
+            </p>
+        </div>
+        `;
+
+      infoWindow.setContent(content);
+      infoWindow.open(map, marker);
+
+      document.getElementById('info-panel').innerHTML = `
+        <h3>${place.name}</h3>
+        ${place.address ? `<p>${place.address}</p>` : ''}
+        ${place.rating ? `<p>★ ${place.rating}</p>` : ''}
+        ${websiteLink}
+      `;
+    }
+
+    function calculateAndDisplayRoute(start, end) {
+      directionsService.route(
+        {
+          origin: start,
+          destination: end,
+          travelMode: google.maps.TravelMode.DRIVING
+        },
+        (response, status) => {
+          if (status === "OK") {
+            directionsRenderer.setDirections(response);
+          } else {
+            alert("Directions request failed due to " + status);
+          }
+        }
+      );
+    }
+
+    async function initMapWithLocations(locations) {
+        document.getElementById('loading').style.display = 'none';
+
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: config.center,
+            zoom: config.zoom,
+            mapId: config.mapId
+        });
+
+        infoWindow = new google.maps.InfoWindow();
+
+        locations.forEach(createMarker);
+
+        // Create a hidden marker for autocomplete results
+        marker = new google.maps.marker.AdvancedMarkerElement({
+            map
+        });
+        marker.setMap(null);
+
+        // Import the PlaceAutocompleteElement class
+        const { PlaceAutocompleteElement } = await google.maps.importLibrary("places");
+
+        // Initialize autocomplete input container (a div, not input)
+        //const container = document.getElementById("autocomplete-container");
+        const inputElement = document.getElementById('searchInput');
+
+        // create autocomplete element inside container
+        const autocomplete = new PlaceAutocompleteElement({
+            element: inputElement,
+            //container,
+            fields: ["place_id", "geometry", "name", "formatted_address"],
+            // Optional: restrict to specific country, types, language, etc.
+            // options: { types: ["establishment"], componentRestrictions: { country: "us" } }
+        });
+
+        autocomplete.addListener("place_changed", () => {
+            const place = autocomplete.getPlace();
+
+            if (!place.geometry) {
+            alert("No details available for input: '" + place.name + "'");
+            return;
+            }
+
+            // Example: Zoom and center map
+            if (place.geometry.viewport) {
+            map.fitBounds(place.geometry.viewport);
+            } else {
+            map.setCenter(place.geometry.location);
+            map.setZoom(15);
+            }
+
+            // Show marker or other UI updates here
+            marker.setPosition(place.geometry.location);
+            marker.setMap(map);
+        });
+
+        // Directions service/render setup
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map
+        });
+
+        document.getElementById("routeBtn").addEventListener("click", () => {
+            const start = document.getElementById("start").value;
+            const end = document.getElementById("end").value;
+            if (!start || !end) {
+            alert("Please enter both start and end locations.");
+            return;
+            }
+            calculateAndDisplayRoute(start, end);
+            marker.setMap(map);
+        });
+
+}
+
+    (async () => {
+      try {
+        await loadGoogleMapsScript();
+        const locations = await loadLocations();
+        await initMapWithLocations(locations);
+      } catch (error) {
+        console.error(error);
+        document.getElementById('loading').textContent = "Error loading map or locations.";
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+#info-panel {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #fff;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 100;
+  max-width: 320px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  line-height: 1.4;
+  transition: box-shadow 0.3s ease;
+}
+
+#info-panel:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+#info-panel h3 {
+  margin-top: 0;
+  font-weight: 700;
+  font-size: 1.4em;
+  color: #222;
+}
+
+#info-panel p {
+  margin: 6px 0;
+  font-size: 0.95em;
+}
+
+#info-panel a {
+  color: #4285F4;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+#info-panel a:hover {
+  text-decoration: underline;
+}

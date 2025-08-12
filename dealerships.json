@@ -1,0 +1,19 @@
+[
+  { "name": "Modesto Subaru", 
+    "placeId": "ChIJcV-fldVQkIAR0qd3AbHegAs", 
+    "city": "Modesto, CA",
+    "website": "https://www.modestosubaru.com/" 
+  },
+  {
+    "name": "Blackstone Chevrolet",
+    "placeId": "ChIJQWbGvvdnlIARauv1WS2ykJ4",
+    "city": "Fresno, CA",
+    "website": "https://www.blackstonechevrolet.com/"
+  },
+  {
+    "name": "Blackstone Cadillac",
+    "placeId": "ChIJp9TKpvdnlIARhUUtAGGSMYU",
+    "city": "Fresno, CA",
+    "website": "https://www.blackstonecadillac.com/"
+  }
+]
