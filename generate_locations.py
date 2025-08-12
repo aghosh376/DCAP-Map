@@ -1,10 +1,11 @@
+import os
 import pdfplumber
 import re
 import json
 import requests
 import time
 
-API_KEY = "AIzaSyC6KDgRCgr8uAipghnPRpaCLREyWUhtKb0"  # <-- Replace with your Google Places API key
+API_KEY = os.getenv("GOOGLE_API_KEY")  # <-- Replace with your Google Places API key
 
 def parse_line(line):
     phone_match = re.search(r'\(\d{3}\)\s*\d{3}[- ]\d{4}$', line.strip())

@@ -1,9 +1,10 @@
+import os
 import requests
 import json
 import time
 import re
 
-API_KEY = "AIzaSyC6KDgRCgr8uAipghnPRpaCLREyWUhtKb0"  # <-- Replace with your Google Places API key
+API_KEY = os.GOOGLE_API_KEY  # <-- Replace with your Google Places API key
 OUTPUT_FILE = "tesla.json"
 
 # Major California cities to avoid Google result caps

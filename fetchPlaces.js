@@ -2,7 +2,7 @@
 import fs from 'fs/promises';
 import fetch from 'node-fetch';
 
-const API_KEY = 'AIzaSyC6KDgRCgr8uAipghnPRpaCLREyWUhtKb0'; // Google Places API key
+const API_KEY = import.meta.env.GOOGLE_API_KEY; // Google Places API key
 const INPUT_FILE = './dealerships_with_places.json'; // input JSON
 const OUTPUT_FILE = './enriched_dealerships.json'; // output JSON
 

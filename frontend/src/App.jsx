@@ -85,7 +85,7 @@ import { APIProvider, Map } from '@vis.gl/react-google-maps';
 
 const App = () => {
   // Move API key to environment variable for security
-  const apiKey = 'AIzaSyC6KDgRCgr8uAipghnPRpaCLREyWUhtKb0';
+  const apiKey = '';
 
   // Handler functions
   const handleMapLoad = () => {
